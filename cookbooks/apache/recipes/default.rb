@@ -20,38 +20,30 @@ execute "a2dissite default" do
   notifies :restart, "service[apache2]"
 end
 
-node['apache']['sites'].each do | site_name, site_data |
+site_name = node['site_name']
 
-  document_root = "/srv/apache/#{site_name}"
+document_root = "/var/www/vhosts/#{site_name}"
 
-  template "/etc/apache2/sites-available/#{site_name}" do
-    source "custom.erb"
-    mode 0644
-    variables(
-      :document_root => document_root,
-      :port => site_data['port']
-    )
-    notifies :restart, "service[apache2]"
-  end
+template "/etc/apache2/sites-available/#{site_name}" do
+	source "custom.erb"
+	mode 0644
+	variables(
+		:document_root => document_root,
+		:port => 80
+	)
+	notifies :restart, "service[apache2]"
+end
 
-  execute "a2ensite #{site_name}" do
-    not_if do
-      ::File.symlink?("/etc/apache2/sites-enabled/#{site_name}")
-    end
-    notifies :restart, "service[apache2]"
-  end
+execute "a2ensite #{site_name}" do
+	not_if do
+		::File.symlink?("/etc/apache2/sites-enabled/#{site_name}")
+	end
+	notifies :restart, "service[apache2]"
+end
 
-  directory document_root do
-    mode 0755
-    recursive true
-  end
-
-  template "#{document_root}/index.html" do
-    source "index.html.erb"
-    variables(
-      :site_name => site_name,
-      :port => site_data['port']
-    )
-    mode 0644
-  end
+directory document_root do
+	owner "root"
+	group "wordpress"
+	mode 2775
+	recursive true
 end
