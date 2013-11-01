@@ -18,11 +18,22 @@
 #
 
 include_recipe "apache2"
-include_recipe "mysql::server"
+include_recipe "mysql::client"
 include_recipe "mysql::ruby"
 include_recipe "php"
 include_recipe "php::module_mysql"
 include_recipe "apache2::mod_php5"
+
+mysql_host = if node['mysql']['host']
+							 node['mysql']['host']
+						 else
+							 search(:node, "role:wordpressdb")
+						 end
+
+if mysql_host.nil?
+	include_recipe "mysql::server"
+	mysql_host="localhost"
+end
 
 if node.has_key?("ec2")
   server_fqdn = node['ec2']['public_hostname']
@@ -35,6 +46,12 @@ node.set_unless['wordpress']['keys']['auth'] = secure_password
 node.set_unless['wordpress']['keys']['secure_auth'] = secure_password
 node.set_unless['wordpress']['keys']['logged_in'] = secure_password
 node.set_unless['wordpress']['keys']['nonce'] = secure_password
+node.set_unless['wordpress']['db']['host'] = mysql_host
+node.set_unless['wordpress']['db']['client'] =  if mysql_host == "localhost"
+																									"localhost"
+																								else
+																									node['wordpress']['db']['ipaddress']
+																								end
 
 
 if node['wordpress']['version'] == 'latest'
@@ -71,7 +88,7 @@ execute "untar-wordpress" do
 end
 
 execute "mysql-install-wp-privileges" do
-  command "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" < #{node['mysql']['conf_dir']}/wp-grants.sql"
+	command "/usr/bin/mysql -u root -p\"#{node['mysql']['server_root_password']}\" -h\"#{mysql_host}\" < #{node['mysql']['conf_dir']}/wp-grants.sql"
   action :nothing
 end
 
@@ -83,19 +100,20 @@ template "#{node['mysql']['conf_dir']}/wp-grants.sql" do
   variables(
     :user     => node['wordpress']['db']['user'],
     :password => node['wordpress']['db']['password'],
-    :database => node['wordpress']['db']['database']
+    :database => node['wordpress']['db']['database'],
+		:client   => node['wordpress']['db']['ipaddress']
   )
   notifies :run, "execute[mysql-install-wp-privileges]", :immediately
 end
 
 execute "create #{node['wordpress']['db']['database']} database" do
-  command "/usr/bin/mysqladmin -u root -p\"#{node['mysql']['server_root_password']}\" create #{node['wordpress']['db']['database']}"
+	command "/usr/bin/mysqladmin -u root -p\"#{node['mysql']['server_root_password']}\" -h\"#{mysql_host}\" create #{node['wordpress']['db']['database']}"
   not_if do
     # Make sure gem is detected if it was just installed earlier in this recipe
     require 'rubygems'
     Gem.clear_paths
     require 'mysql'
-    m = Mysql.new("localhost", "root", node['mysql']['server_root_password'])
+    m = Mysql.new("#{mysql_host}", "root", node['mysql']['server_root_password'])
     m.list_dbs.include?(node['wordpress']['db']['database'])
   end
   notifies :create, "ruby_block[save node data]", :immediately unless Chef::Config[:solo]
@@ -125,6 +143,7 @@ template "#{node['wordpress']['dir']}/wp-config.php" do
     :database        => node['wordpress']['db']['database'],
     :user            => node['wordpress']['db']['user'],
     :password        => node['wordpress']['db']['password'],
+		:host						 => node['wordpress']['db']['host'],
     :auth_key        => node['wordpress']['keys']['auth'],
     :secure_auth_key => node['wordpress']['keys']['secure_auth'],
     :logged_in_key   => node['wordpress']['keys']['logged_in'],

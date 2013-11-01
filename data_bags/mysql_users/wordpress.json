@@ -1,0 +1,6 @@
+{
+  "id": "wordpress",
+	"host": "10.%",
+	"db": "wordpress",
+	"password": "Secret"
+}
