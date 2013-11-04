@@ -217,22 +217,22 @@ def scan_available_timezones(tzdir)
             if !::File.directory?(path) && !::File.symlink?(path)
                 # Ignore any file named "posixrules" or "localtime"
                 if ::File.basename(path) != "posixrules" && ::File.basename(path) != "localtime"
-            	    # Do consider if content exactly matches /etc/localtime.
-            	    if localtime_content == File.read(path)
+                  # Do consider if content exactly matches /etc/localtime.
+                  if localtime_content == File.read(path)
                         tzname = path.gsub("#{tzdir}/","")
-            	        if validate_zone(tzname)
-            	            if (bestzonename.nil? ||
-            		        tzname.length < bestzonename.length ||
-            		        (tzname.length == bestzonename.length &&
+                      if validate_zone(tzname)
+                          if (bestzonename.nil? ||
+                        tzname.length < bestzonename.length ||
+                        (tzname.length == bestzonename.length &&
                                  (tzname <=> bestzonename) < 0)
                                )
-            		        bestzonename = tzname
-            		    end
-            	        end
-            	    end
-            	end
+                        bestzonename = tzname
+                    end
+                      end
+                  end
+              end
             end
-    	end
+      end
     end
 
     return bestzonename

@@ -27,6 +27,11 @@ default['wordpress']['dir'] = "/var/www/wordpress"
 default['wordpress']['db']['database'] = "wordpressdb"
 default['wordpress']['db']['user'] = "wordpressuser"
 default['wordpress']['server_aliases'] = [node['fqdn']]
+default['wordpress']['db']['database'] = "wordpress"
+default['wordpress']['db']['user'] = "wordpress"
+default['wordpress']['db']['password'] = "Secret"
+default['wordpress']['db']['host'] = "10.176.5.36"
+
 
 # Languages
 default['wordpress']['languages']['lang'] = ''

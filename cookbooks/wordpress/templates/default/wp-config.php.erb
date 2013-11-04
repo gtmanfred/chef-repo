@@ -25,7 +25,7 @@ define('DB_USER', '<%= @user %>');
 define('DB_PASSWORD', '<%= @password %>');
 
 /** MySQL hostname */
-define('DB_HOST', 'localhost');
+define('DB_HOST', '<%= @host %>');
 
 /** Database Charset to use in creating database tables. */
 define('DB_CHARSET', 'utf8');
@@ -70,7 +70,7 @@ define ('WPLANG', '<%= @lang %>');
 
 /** WordPress absolute path to the Wordpress directory. */
 if ( !defined('ABSPATH') )
-	define('ABSPATH', dirname(__FILE__) . '/');
+  define('ABSPATH', dirname(__FILE__) . '/');
 
 /** Sets up WordPress vars and included files. */
 require_once(ABSPATH . 'wp-settings.php');
