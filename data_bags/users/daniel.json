@@ -6,5 +6,6 @@
   "home": "/home/daniel",
   "shell": "/bin/bash",
   "password": "$6$r0uSFTkS$HDqcz/MH2QFXZ21uWOdSO6vK5JOKwu5r.paOVifvWAI7vPliuXwFafK3jr28s8qcrW61/Pe2pWroRmomv29Uc1",
-	"sudo": true
+	"sudo": true,
+  "ssh_keygen": true
 }

@@ -1,0 +1,16 @@
+settings = {
+     logfile    = "/var/log/lsyncd/lsyncd.log",
+     statusFile = "/var/log/lsyncd/lsyncd-status.log",
+     statusInterval = 20
+            
+}
+ 
+<% @slaves.each do |server| %>
+sync{
+      default.rsyncssh,
+      source="<%= server[:source] %>",
+      host="<%= server[:ipaddress] %>",
+      targetdir="<%= server[:target] %>",
+      rsyncOpts="-avz"
+}
+<% end %>

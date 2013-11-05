@@ -15,11 +15,8 @@ search(:mysql_users, '*:*').each do |users|
   node.default[:dbs][:database][users['id']]['user'] = users['id']
   node.default[:dbs][:database][users['id']]['db'] = users['db']
   node.default[:dbs][:database][users['id']]['host'] = users['host']
-  if users['password'] == ""
-    node.default[:dbs][:database][users['id']][:password] = secure_password
-  else
-    node.default[:dbs][:database][users['id']][:password] = users['password']
-  end
+  users['password'] = secure_password unless users['password'] == ""
+  node.default[:dbs][:database][users['id']][:password] = users['password']
   mysql_database_user users['id'] do
     connection(
       :host => node[:dbs][:database][:host],

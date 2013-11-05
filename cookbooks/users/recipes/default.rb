@@ -19,6 +19,7 @@ search(:users, "*:*").each do |user_data|
     shell user_data['shell']
     password user_data['password']
   end
+
   if user_data['sudo']
     template "/etc/sudoers.d/#{user_data['id']}" do
       source "sudoers.conf.erb"
