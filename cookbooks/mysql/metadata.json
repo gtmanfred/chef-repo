@@ -163,6 +163,7 @@
     "mysql": "Includes the client recipe to configure a client",
     "mysql::client": "Installs packages required for mysql clients using run_action magic",
     "mysql::server": "Installs packages required for mysql servers w/o manual intervention",
-    "mysql::server_ec2": "Performs EC2-specific mountpoint manipulation"
+    "mysql::server_ec2": "Performs EC2-specific mountpoint manipulation",
+    "mysql::master": "Master replication"
   }
 }
