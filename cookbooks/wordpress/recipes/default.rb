@@ -31,7 +31,7 @@ else
   server_fqdn = node['fqdn']
 end
 
-mysql = search(:node, 'role:mysqld')[0]
+mysql = search(:node, 'role:mysqld-master').first
 node.default['wordpress']['db']['password'] = mysql[:dbs][:database]['wordpress']['password']
 node.default['wordpress']['db']['host'] = mysql['rackspace']['local_ipv4']
 node.default['wordpress']['db']['database'] = mysql[:dbs][:database]['wordpress']['db']

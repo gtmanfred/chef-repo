@@ -1,13 +1,21 @@
 
-## mysql::slave
-ruby_block "start_replication" do
-  block do
-    dbmasters = search(:node, "mysql_master:true")
-     
-    if dbmasters.size != 1
-      Chef::Log.error("#{dbmasters.size} database masters, cannot set up replication!")
-    else
-      dbmaster = dbmasters.first
+# mysql::slave
+
+include_recipe "dbs"
+
+dbmasters = search(:node, "mysql_master:true")
+dbmaster = dbmasters.first
+dumpcmd = "-h #{dbmaster[:rackspace][:local_ipv4]} -u wordpress -p#{dbmaster[:dbs][:database][:wordpress][:password]} --master-data=1 --flush-privileges wordpress"
+if dbmasters.size != 1
+  Chef::Log.error("#{dbmasters.size} database masters, cannot set up replication!")
+else
+  bash "mysql_dump" do
+    code <<-EOH
+      mysqldump #{dumpcmd} | mysql wordpress
+      EOH
+  end
+  ruby_block "start_replication" do
+    block do
       Chef::Log.info("Using #{dbmaster.name} as master")
        
       m = Mysql.new("localhost", "root", node[:mysql][:server_root_password])
@@ -15,24 +23,25 @@ ruby_block "start_replication" do
       CHANGE MASTER TO
         MASTER_HOST="#{dbmaster.rackspace.local_ipv4}",
         MASTER_USER="repl",
-        MASTER_PASSWORD="#{dbmaster.mysql.server_repl_password}",
-        MASTER_LOG_FILE="#{dbmaster.mysql.master_file}",
-        MASTER_LOG_POS=0;
+        MASTER_PASSWORD="#{dbmaster.mysql.server_repl_password}";
       }
-      puts command
       Chef::Log.info "Sending start replication command to mysql: "
       Chef::Log.info "#{command}"
        
+      
+      puts "Stop slave"
       m.query("stop slave")
+      puts "command"
       m.query(command)
-      m.query("start slave")
+      #puts "Start slave"
+      #m.query("start slave")
     end
-  end
-  not_if do
-    #TODO this fails if mysql is not running - check first
-    m = Mysql.new("localhost", "root", node[:mysql][:server_root_password])
-    slave_sql_running = ""
-    m.query("show slave status") {|r| r.each_hash {|h| slave_sql_running = h['Slave_SQL_Running'] } }
-    slave_sql_running == "Yes"
+    not_if do
+      #TODO this fails if mysql is not running - check first
+      m = Mysql.new("localhost", "root", node[:mysql][:server_root_password])
+      slave_sql_running = ""
+      m.query("show slave status") {|r| r.each_hash {|h| slave_sql_running = h['Slave_SQL_Running'] } }
+      slave_sql_running == "Yes"
+    end
   end
 end

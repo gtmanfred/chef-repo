@@ -25,11 +25,7 @@ ruby_block "generate-keypair" do
     File.chmod(0400, pub_key)
     File.chmod(0400, private_key)
     node.override[:ssh] = {}
-    if openssh_format.nil?
-      node.override[:ssh][:public_key] = File.open(pub_key, 'r').readlines
-    else
-      node.override[:ssh][:public_key] = openssh_format
-    end
+    node.override[:ssh][:public_key] = File.open(pub_key, 'r').readlines
   end
 end
 

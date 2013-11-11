@@ -1,15 +1,3 @@
 name "webserver"
-description "webserver"
-run_list "role[base]", "recipe[apache]"
-default_attributes({
-  "apache" => {
-    "sites" => {
-      "ponies" => {
-        "port" => 82
-      },
-      "bears" => {
-        "port" => 8081
-      }
-    }
-  }
-})
+description "Webserver Role"
+run_list "role[base]", "recipe[apache2]", "recipe[mysql::ruby]", "recipe[php]", "recipe[php::module_mysql]", "recipe[apache2::mod_php5]", "recipe[redis]"
