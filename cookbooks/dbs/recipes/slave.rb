@@ -1,6 +1,10 @@
 dbmasters = search(:node, "mysql_master:true")
 dbmaster = dbmasters.first
-dumpcmd = "-h #{dbmaster[:rackspace][:local_ipv4]} -u wordpress -p#{dbmaster[:dbs][:database][:wordpress][:password]} --master-data=1 --flush-privileges wordpress"
+dumpcmds = {}
+databases = search(:mysql_dbs, "*:*")
+databases.each do |dbs|
+  dumpcmds[dbs[:id]] = "-h #{dbmaster[:rackspace][:local_ipv4]} -u #{dbs[:id]} -p#{dbmaster[:dbs][:database][dbs[:id]][:password]} --master-data=1 --flush-privileges #{dbs[:id]}"
+end
 if dbmasters.size != 1
   Chef::Log.error("#{dbmasters.size} database masters, cannot set up replication!")
 else
@@ -8,14 +12,17 @@ else
     source "slave.erb"
     notifies :restart, "service[mysql]"
     variables(
-      :id => node[:ipaddress].rpartition('.').last
+      :id => node[:ipaddress].rpartition('.').last,
+      :dbs => databases
     )
   end
 
-  bash "mysql_dump" do
-    code <<-EOH
-      mysqldump #{dumpcmd} | mysql wordpress
-      EOH
+  dumpcmds.search do |id, dumpcmd|
+    bash "mysql-dump-#{id}" do
+      code <<-EOH
+        mysqldump #{dumpcmd} | mysql #{id}
+        EOH
+    end
   end
 
   ruby_block "start_replication" do

@@ -1,3 +1,5 @@
 [mysqld]
 server-id = <%= @id %>
-replicate-wild-do-table=wordpress.%
+<%= @dbs.each do |name| %>
+replicate-wild-do-table=<%= name[:id] %>.%
+<% end %>
