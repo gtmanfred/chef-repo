@@ -3,7 +3,10 @@ dbmaster = dbmasters.first
 dumpcmds = {}
 databases = search(:mysql_dbs, "*:*")
 databases.each do |dbs|
-  dumpcmds[dbs[:id]] = "-h #{dbmaster[:rackspace][:local_ipv4]} -u #{dbs[:id]} -p#{dbmaster[:dbs][:database][dbs[:id]][:password]} --master-data=1 --flush-privileges #{dbs[:id]}"
+  if dbs[:user].nil?
+    dbs[:user] = dbs[:id]
+  end
+  dumpcmds[dbs[:id]] = "-h #{dbmaster[:rackspace][:local_ipv4]} -u #{dbs[:user]} -p#{dbmaster[:dbs][:database][dbs[:user]][:password]} --master-data=1 --flush-privileges #{dbs[:id]}"
 end
 if dbmasters.size != 1
   Chef::Log.error("#{dbmasters.size} database masters, cannot set up replication!")
@@ -17,7 +20,7 @@ else
     )
   end
 
-  dumpcmds.search do |id, dumpcmd|
+  dumpcmds.each do |id, dumpcmd|
     bash "mysql-dump-#{id}" do
       code <<-EOH
         mysqldump #{dumpcmd} | mysql #{id}

@@ -1,5 +1,5 @@
 [mysqld]
 server-id = <%= @id %>
-<%= @dbs.each do |name| %>
+<% @dbs.each do |name| %>
 replicate-wild-do-table=<%= name[:id] %>.%
 <% end %>
