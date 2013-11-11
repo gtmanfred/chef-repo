@@ -11,7 +11,7 @@ end
 if dbmasters.size != 1
   Chef::Log.error("#{dbmasters.size} database masters, cannot set up replication!")
 else
-  template "#{node[:mysql][:confd_dir]}/slave.cnf" do
+  template "#{node[:mysql][:server][:directories][:confd_dir]}/slave.cnf" do
     source "slave.erb"
     notifies :restart, "service[mysql]"
     variables(
