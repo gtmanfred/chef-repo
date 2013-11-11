@@ -1,4 +1,4 @@
-dbmasters = search(:node, "mysql_master:true")
+dbmasters = search(:node, "master:true")
 dbmaster = dbmasters.first
 dumpcmds = {}
 databases = search(:mysql_dbs, "*:*")
