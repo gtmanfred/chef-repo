@@ -9,8 +9,7 @@ master_user = search(:mysql_users, "master_user:true").first
 if master_user.nil?
   Chef::Log.error("Please create a master user for all your databases")
 end
-names = ""
-databases.each { |h| names = "#{names} #{h[:id]}" }
+names = databases.map{ |h| h[:id]}.join(" ")
 dumpcmds = "-h #{dbmaster[:rackspace][:local_ipv4]} -u #{master_user[:id]} -p#{master_user[:password]} --master-data=1 --flush-privileges"
 if dbmasters.size != 1
   Chef::Log.error("#{dbmasters.size} database masters, cannot set up replication!")
