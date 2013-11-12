@@ -8,3 +8,6 @@ validation_key           '/home/knife/chef-repo/.chef/chef-validator.pem'
 chef_server_url          'https://daniel-chef.gtmanfred.com:443'
 syntax_check_cache_path  '/home/knife/chef-repo/.chef/syntax_check_cache'
 cookbook_path            "#{current_dir}/../cookbooks"
+
+eval(File.open("#{current_dir}/rackspace.rb").read)
+
