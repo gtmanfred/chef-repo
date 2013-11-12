@@ -1,13 +1,17 @@
+include_recipe "mysql::server"
+
+require 'mysql'
+
 dbmasters = search(:node, "master:true")
 dbmaster = dbmasters.first
-dumpcmds = {}
 databases = search(:mysql_dbs, "*:*")
-databases.each do |dbs|
-  if dbs[:user].nil?
-    dbs[:user] = dbs[:id]
-  end
-  dumpcmds[dbs[:id]] = "-h #{dbmaster[:rackspace][:local_ipv4]} -u #{dbs[:user]} -p#{dbmaster[:dbs][:database][dbs[:user]][:password]} --master-data=1 --flush-privileges #{dbs[:id]}"
+master_user = search(:mysql_users, "master_user:true").first
+if master_user.nil?
+  Chef::Log.error("Please create a master user for all your databases")
 end
+names = ""
+databases.each { |h| names = "#{names} #{h[:id]}" }
+dumpcmds = "-h #{dbmaster[:rackspace][:local_ipv4]} -u #{master_user[:id]} -p#{master_user[:password]} --master-data=1 --flush-privileges"
 if dbmasters.size != 1
   Chef::Log.error("#{dbmasters.size} database masters, cannot set up replication!")
 else
@@ -20,11 +24,23 @@ else
     )
   end
 
-  dumpcmds.each do |id, dumpcmd|
-    bash "mysql-dump-#{id}" do
+  bash "mysql-dump" do
+    if databases.size == 1
       code <<-EOH
-        mysqldump #{dumpcmd} | mysql #{id}
+        mysqladmin stop-slave
+        mysqldump #{dumpcmds} #{names} | mysql #{names}
         EOH
+    else
+      code <<-EOH
+        mysqladmin stop-slave
+        mysqldump #{dumpcmds} --databases #{names} | mysql
+        EOH
+    end
+    not_if do
+      m = Mysql.new("localhost", "root", node[:mysql][:server_root_password])
+      slave_sql_running = ""
+      m.query("show slave status") {|r| r.each_hash {|h| slave_sql_running = h['Slave_SQL_Running'] } }
+      slave_sql_running == "Yes"
     end
   end
 
@@ -43,15 +59,11 @@ else
       Chef::Log.info "#{command}"
        
       
-      puts "Stop slave"
       m.query("stop slave")
-      puts "command"
       m.query(command)
-      #puts "Start slave"
       #m.query("start slave")
     end
     not_if do
-      #TODO this fails if mysql is not running - check first
       m = Mysql.new("localhost", "root", node[:mysql][:server_root_password])
       slave_sql_running = ""
       m.query("show slave status") {|r| r.each_hash {|h| slave_sql_running = h['Slave_SQL_Running'] } }
